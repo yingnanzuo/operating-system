@@ -1,0 +1,159 @@
+#include<iostream>
+#include<string>
+#include<cctype>
+using namespace std;
+
+struct process {
+	string name;
+	int arrival_time;
+	int CPUtime;
+	int start_time;
+	int terminate_time;
+	int turnaround_time;
+	bool status;
+	int priority;
+};
+
+void Priority_Algorithms(struct process *, int);
+
+void getArrivalTime_and_CPUTime(struct process *processes, int number) {
+	cout << "Please input every process arrival time and time required for completion:" << endl;
+	for (int i = 0; i<number; i++) {
+		cout << "No." << i + 1 << ": ";
+		cin >> processes[i].arrival_time >> processes[i].CPUtime;
+		
+		if (processes[i].arrival_time <= -1 || processes[i].CPUtime <= -1) {
+			cout << "The arrival time or the time required for completion cannot less than 0." << endl;
+			cout << "No." << i + 1 << ": ";
+			cin >> processes[i].arrival_time >> processes[i].CPUtime;
+		}
+		
+	}
+}
+
+void getPriority(struct process *processes, int number) {
+	cout << "Please input every process priority(small number = higher priority):" << endl;
+	for (int i = 0; i<number; i++) {
+		cout << "No." << i + 1 << ": ";
+		cin >> processes[i].priority;
+		if (processes[i].priority <= 0 ) {
+			cout << "The priority cannot less than 1." << endl;
+			cout << "No." << i + 1 << ": ";
+			cin >> processes[i].priority;
+		}
+	}
+}
+
+int main() {
+	process *processes;
+	int process_number;
+
+	cout << "Please input processes number you want(not bigger than 5): ";
+	cin >> process_number;
+
+	processes = new process[process_number];
+
+
+	getArrivalTime_and_CPUTime(processes, process_number);
+	Priority_Algorithms(processes, process_number);
+
+	return 0;
+}
+
+void Priority_Algorithms(struct process *processes, int number) {
+	int current_time = 0;
+	double average_turnaround_time;
+	int total_time = 0;
+	bool all_status = false;
+	int mini_arrival_time_index;
+	int smallest_priority_index;
+	getPriority(processes, number);
+	for (int i = 0; i < number; i++) {
+		processes[i].status = false;
+	}
+	while (!all_status) {
+		mini_arrival_time_index = -1;
+		smallest_priority_index = -1;
+		for (int i = 0; i < number; i++) {
+			if (processes[i].status)
+				continue;
+			if (mini_arrival_time_index == -1)
+				mini_arrival_time_index = i;
+			else if (processes[i].arrival_time < processes[mini_arrival_time_index].arrival_time)
+				mini_arrival_time_index = i;
+			if (processes[i].arrival_time == processes[mini_arrival_time_index].arrival_time&&processes[i].priority < processes[mini_arrival_time_index].priority)
+				mini_arrival_time_index = i;
+		}
+
+		for (int q = 0; q < number; q++) {
+			if (processes[q].status)
+				continue;
+			if (smallest_priority_index == -1)
+				smallest_priority_index = q;
+			if (processes[q].priority < processes[smallest_priority_index].priority )
+				smallest_priority_index = q;
+		}
+		if ((smallest_priority_index != -1) && (current_time >= processes[smallest_priority_index].arrival_time)) {
+			if (processes[smallest_priority_index].start_time == -1) {
+				processes[smallest_priority_index].start_time = current_time;
+				processes[smallest_priority_index].terminate_time = processes[smallest_priority_index].start_time + processes[smallest_priority_index].CPUtime;
+				processes[smallest_priority_index].turnaround_time = processes[smallest_priority_index].terminate_time - processes[smallest_priority_index].arrival_time;
+				processes[smallest_priority_index].status = true;
+				current_time = processes[smallest_priority_index].terminate_time;
+			}
+			else {
+				processes[smallest_priority_index].terminate_time = current_time + processes[smallest_priority_index].CPUtime;
+				processes[smallest_priority_index].turnaround_time = processes[smallest_priority_index].terminate_time - processes[smallest_priority_index].arrival_time;
+				processes[smallest_priority_index].status = true;
+				current_time = processes[smallest_priority_index].terminate_time;
+			}
+		
+		}
+		else if ((current_time < processes[smallest_priority_index].arrival_time) && (processes[mini_arrival_time_index].arrival_time >= current_time)) {
+			if (processes[mini_arrival_time_index].start_time == -1)
+				processes[mini_arrival_time_index].start_time = processes[mini_arrival_time_index].arrival_time;
+			if ((processes[mini_arrival_time_index].start_time + processes[mini_arrival_time_index].CPUtime) <= processes[smallest_priority_index].arrival_time) {
+				processes[mini_arrival_time_index].terminate_time = processes[mini_arrival_time_index].start_time + processes[mini_arrival_time_index].CPUtime;
+				processes[mini_arrival_time_index].turnaround_time = processes[mini_arrival_time_index].terminate_time - processes[mini_arrival_time_index].arrival_time;
+				processes[mini_arrival_time_index].status = true;
+				current_time = processes[mini_arrival_time_index].terminate_time;
+			}
+			else {
+				processes[mini_arrival_time_index].CPUtime = processes[mini_arrival_time_index].CPUtime - processes[smallest_priority_index].arrival_time + processes[mini_arrival_time_index].start_time;
+				current_time = processes[smallest_priority_index].arrival_time;
+			}
+		}
+		
+		else if ((current_time < processes[smallest_priority_index].arrival_time) && (processes[mini_arrival_time_index].arrival_time < current_time)) {
+			if (processes[mini_arrival_time_index].start_time == -1)
+				processes[mini_arrival_time_index].start_time = current_time;
+			if ((processes[mini_arrival_time_index].start_time + processes[mini_arrival_time_index].CPUtime) <= processes[smallest_priority_index].arrival_time) {
+				processes[mini_arrival_time_index].terminate_time = processes[mini_arrival_time_index].start_time + processes[mini_arrival_time_index].CPUtime;
+				processes[mini_arrival_time_index].turnaround_time = processes[mini_arrival_time_index].terminate_time - processes[mini_arrival_time_index].arrival_time;
+				processes[mini_arrival_time_index].status = true;
+				current_time = processes[mini_arrival_time_index].terminate_time;
+			}
+			else {
+				processes[mini_arrival_time_index].CPUtime = processes[mini_arrival_time_index].CPUtime - processes[smallest_priority_index].arrival_time + current_time;
+				current_time = processes[smallest_priority_index].arrival_time;
+			}
+
+		}
+		for (int a = 0; a < number; a++) {
+			if (!processes[a].status)
+				break;
+			if (a == number - 1)
+				all_status = true;
+		}
+	}
+	for (int b = 0; b < number; b++) {
+		cout << "Process " << b + 1 << " :" << endl;
+		cout << "Starting Time: " << processes[b].start_time << endl;
+		cout << "Terminating Time: " << processes[b].terminate_time << endl;
+		cout << "Turnaround Time: " << processes[b].turnaround_time << endl;
+	}
+
+	for (int x = 0; x < number; x++)
+		total_time += processes[x].turnaround_time;
+	average_turnaround_time = total_time*1.0 / number;
+	cout << "The average turnaround time: " << average_turnaround_time << endl;
