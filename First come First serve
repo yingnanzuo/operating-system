@@ -1,0 +1,98 @@
+#include<iostream>
+#include<string>
+
+using namespace std;
+
+struct process {
+	string name;
+	int arrival_time;
+	int time_require_for_completion;
+	int start_time;
+	int terminate_time;
+	int turnaround_time;
+	bool status = false;
+};
+
+void First_Come_First_Serve(struct process *, int);
+
+void getArrivalTime_and_CPUTime(struct process *processes, int number) {
+	cout << "Please input every process arrival time and time required for completion:" << endl;
+	for (int i = 0; i<number; i++) {
+		cout << "No." << i + 1 << ": ";
+		cin >> processes[i].arrival_time >> processes[i].time_require_for_completion;
+		if (processes[i].arrival_time <=-1 || processes[i].time_require_for_completion <=-1) {
+			cout << "The arrival time or the time required for completion cannot less than 0." << endl;
+			cout << "No." << i + 1 << ": ";
+			cin >> processes[i].arrival_time >> processes[i].time_require_for_completion;
+		}
+	}
+}
+
+
+
+int main() {
+	process *processes;
+	int process_number;
+
+	cout << "Please input processes number you want(not bigger than 5): ";
+	cin >> process_number;
+
+	processes = new process[process_number];
+
+
+	getArrivalTime_and_CPUTime(processes, process_number);
+
+	First_Come_First_Serve(processes, process_number);
+
+	return 0;
+}
+
+void First_Come_First_Serve(struct process *processes, int number) {
+	int current_time = 0;
+	double average_turnaround_time;
+	int total_time = 0;
+	bool all_status = false;
+	int mini_arrival_time_index;
+	while (!all_status) {
+		mini_arrival_time_index = -1;
+		for (int i = 0; i < number; i++) {
+			if (processes[i].status)
+				continue;
+			if (mini_arrival_time_index == -1)
+				mini_arrival_time_index = i;
+			else if (processes[i].arrival_time < processes[mini_arrival_time_index].arrival_time)
+				mini_arrival_time_index = i;
+		}
+		if ((mini_arrival_time_index != -1) && (current_time >= processes[mini_arrival_time_index].arrival_time)) {
+			processes[mini_arrival_time_index].start_time = current_time;
+			processes[mini_arrival_time_index].terminate_time = processes[mini_arrival_time_index].start_time + processes[mini_arrival_time_index].time_require_for_completion;
+			processes[mini_arrival_time_index].turnaround_time = processes[mini_arrival_time_index].terminate_time - processes[mini_arrival_time_index].arrival_time;
+			processes[mini_arrival_time_index].status = true;
+			current_time = processes[mini_arrival_time_index].terminate_time;
+		}
+		else if((mini_arrival_time_index != -1) && (current_time < processes[mini_arrival_time_index].arrival_time)){
+			processes[mini_arrival_time_index].start_time = processes[mini_arrival_time_index].arrival_time;
+			processes[mini_arrival_time_index].terminate_time = processes[mini_arrival_time_index].start_time + processes[mini_arrival_time_index].time_require_for_completion;
+			processes[mini_arrival_time_index].turnaround_time = processes[mini_arrival_time_index].terminate_time - processes[mini_arrival_time_index].arrival_time;
+			processes[mini_arrival_time_index].status = true;
+			current_time = processes[mini_arrival_time_index].terminate_time;
+		}
+		for (int a = 0; a < number; a++) {
+			if (!processes[a].status)
+				break;
+			if (a == number - 1)
+				all_status = true;
+		}
+	}
+	for (int b = 0; b < number; b++) {
+		cout << "Process " << b+1 << " :" << endl;
+		cout << "Starting Time: " << processes[b].start_time << endl;
+		cout << "Terminating Time: " << processes[b].terminate_time << endl;
+		cout << "Turnaround Time: " << processes[b].turnaround_time << endl;
+	}
+
+	for (int x = 0; x < number; x++) 
+		total_time += processes[x].turnaround_time;
+	average_turnaround_time = total_time*1.0 / number;
+	cout << "The average turnaround time: " << average_turnaround_time << endl;
+}
